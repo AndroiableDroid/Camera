@@ -556,6 +556,16 @@ public:
     static const char CDS_MODE_AUTO[];
 
     static const char KEY_SELECTED_AUTO_SCENE[];
+/// ALTEK_HAL >>>
+// ENABLE_FOR_NEW_MODE
+#if 1
+	static const char FOCUS_MODE_CONTINUOUS_PICTURE_HYBRID[];
+	static const char FOCUS_MODE_CONTINUOUS_VIDEO_HYBRID[];
+	static const char FOCUS_MODE_AUTO_HYBRID[];
+	static const char FOCUS_MODE_AUTO_INSTANT_HYBRID[];
+#endif
+/// ALTEK_HAL <<<
+
 #ifdef TARGET_TS_MAKEUP
     static const char KEY_TS_MAKEUP[];
     static const char KEY_TS_MAKEUP_WHITEN[];

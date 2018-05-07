@@ -409,6 +409,16 @@ const char QCameraParameters::KEY_QC_USER_SETTING[] = "user-setting";
 const char QCameraParameters::KEY_QC_WB_CCT_MODE[] = "color-temperature";
 const char QCameraParameters::KEY_QC_WB_GAIN_MODE[] = "rbgb-gains";
 
+/// ALTEK_HAL >>>
+// ENABLE_FOR_NEW_MODE
+#if 1
+const char QCameraParameters::FOCUS_MODE_CONTINUOUS_PICTURE_HYBRID[] = "continuous-picture-hybrid";
+const char QCameraParameters::FOCUS_MODE_CONTINUOUS_VIDEO_HYBRID[] = "continuous-video-hybrid";
+const char QCameraParameters::FOCUS_MODE_AUTO_HYBRID[] = "auto-hybrid";
+const char QCameraParameters::FOCUS_MODE_AUTO_INSTANT_HYBRID[] = "auto-instant";
+#endif
+/// ALTEK_HAL <<<
+
 
 #ifdef TARGET_TS_MAKEUP
 const char QCameraParameters::KEY_TS_MAKEUP[] = "tsmakeup";
@@ -534,6 +544,16 @@ const QCameraParameters::QCameraMap<cam_focus_mode_type>
     { FOCUS_MODE_CONTINUOUS_PICTURE, CAM_FOCUS_MODE_CONTINOUS_PICTURE },
     { FOCUS_MODE_CONTINUOUS_VIDEO,   CAM_FOCUS_MODE_CONTINOUS_VIDEO },
     { FOCUS_MODE_MANUAL_POSITION,    CAM_FOCUS_MODE_MANUAL},
+/// ALTEK_HAL >>>
+// ENABLE_FOR_NEW_MODE
+#if 1
+    { FOCUS_MODE_CONTINUOUS_PICTURE_HYBRID,    CAM_FOCUS_MODE_CONTINOUS_PICTURE_HYBRID},
+    { FOCUS_MODE_CONTINUOUS_VIDEO_HYBRID,    CAM_FOCUS_MODE_CONTINOUS_VIDEO_HYBRID},
+    { FOCUS_MODE_AUTO_HYBRID,    CAM_FOCUS_MODE_AUTO_HYBRID},
+    { FOCUS_MODE_AUTO_INSTANT_HYBRID,    CAM_FOCUS_MODE_AUTO_INSTANT_HYBRID},
+#endif
+/// ALTEK_HAL <<<
+
 };
 
 const QCameraParameters::QCameraMap<cam_effect_mode_type>
@@ -812,7 +832,7 @@ QCameraParameters::QCameraParameters()
     // For thermal mode, it should be set as system property
     // because system property applies to all applications, while
     // parameters only apply to specific app.
-    property_get("persist.camera.thermal.mode", value, "fps");
+    property_get("persist.camera.thermal.mode", value, "frameskip");
     if (!strcmp(value, "frameskip")) {
         m_ThermalMode = QCAMERA_THERMAL_ADJUST_FRAMESKIP;
     } else {
@@ -5145,7 +5165,7 @@ int32_t QCameraParameters::initDefaultParameters()
     // Livesnapshot is not supported for 4K2K video resolutions
     set(KEY_QC_4K2K_LIVESNAP_SUPPORTED, VALUE_FALSE);
     //Set video buffers as uncached by default
-    set(KEY_QC_CACHE_VIDEO_BUFFERS, "0");
+    set(KEY_QC_CACHE_VIDEO_BUFFERS, VALUE_DISABLE);
 
     if (m_pCapability->low_power_mode_supported == 1) {
         set(KEY_QC_LOW_POWER_MODE_SUPPORTED, VALUE_TRUE);
@@ -7715,11 +7735,17 @@ int32_t QCameraParameters::setHDRAEBracket(cam_exp_bracketing_t hdrBracket)
 int32_t QCameraParameters::setCacheVideoBuffers(const char *cacheVideoBufStr)
 {
     if (cacheVideoBufStr != NULL) {
-        int32_t cacheVideoBuf = atoi(cacheVideoBufStr);
-        CDBG("%s : Setting video buffer %s", __func__,
+        int32_t cacheVideoBuf = lookupAttr(ENABLE_DISABLE_MODES_MAP,
+                PARAM_MAP_SIZE(ENABLE_DISABLE_MODES_MAP), cacheVideoBufStr);
+        if(cacheVideoBuf != NAME_NOT_FOUND) {
+            CDBG("%s : Setting video buffer %s", __func__,
                 (cacheVideoBuf == 0) ? "UnCached" : "Cached");
-        updateParamEntry(KEY_QC_CACHE_VIDEO_BUFFERS, cacheVideoBufStr);
-        return NO_ERROR;
+            updateParamEntry(KEY_QC_CACHE_VIDEO_BUFFERS, cacheVideoBufStr);
+            return NO_ERROR;
+        }
+        else {
+            CDBG_HIGH("%s : Invalid mapped cache video value: %d",__func__, cacheVideoBuf);
+        }
     }
     CDBG_HIGH("Invalid cache video value: %s",
             (cacheVideoBufStr == NULL) ? "NULL" : cacheVideoBufStr);
