@@ -409,6 +409,16 @@ const char QCameraParameters::KEY_QC_USER_SETTING[] = "user-setting";
 const char QCameraParameters::KEY_QC_WB_CCT_MODE[] = "color-temperature";
 const char QCameraParameters::KEY_QC_WB_GAIN_MODE[] = "rbgb-gains";
 
+/// ALTEK_HAL >>>
+// ENABLE_FOR_NEW_MODE
+#if 1
+const char QCameraParameters::FOCUS_MODE_CONTINUOUS_PICTURE_HYBRID[] = "continuous-picture-hybrid";
+const char QCameraParameters::FOCUS_MODE_CONTINUOUS_VIDEO_HYBRID[] = "continuous-video-hybrid";
+const char QCameraParameters::FOCUS_MODE_AUTO_HYBRID[] = "auto-hybrid";
+const char QCameraParameters::FOCUS_MODE_AUTO_INSTANT_HYBRID[] = "auto-instant";
+#endif
+/// ALTEK_HAL <<<
+
 
 #ifdef TARGET_TS_MAKEUP
 const char QCameraParameters::KEY_TS_MAKEUP[] = "tsmakeup";
@@ -534,6 +544,16 @@ const QCameraParameters::QCameraMap<cam_focus_mode_type>
     { FOCUS_MODE_CONTINUOUS_PICTURE, CAM_FOCUS_MODE_CONTINOUS_PICTURE },
     { FOCUS_MODE_CONTINUOUS_VIDEO,   CAM_FOCUS_MODE_CONTINOUS_VIDEO },
     { FOCUS_MODE_MANUAL_POSITION,    CAM_FOCUS_MODE_MANUAL},
+/// ALTEK_HAL >>>
+// ENABLE_FOR_NEW_MODE
+#if 1
+    { FOCUS_MODE_CONTINUOUS_PICTURE_HYBRID,    CAM_FOCUS_MODE_CONTINOUS_PICTURE_HYBRID},
+    { FOCUS_MODE_CONTINUOUS_VIDEO_HYBRID,    CAM_FOCUS_MODE_CONTINOUS_VIDEO_HYBRID},
+    { FOCUS_MODE_AUTO_HYBRID,    CAM_FOCUS_MODE_AUTO_HYBRID},
+    { FOCUS_MODE_AUTO_INSTANT_HYBRID,    CAM_FOCUS_MODE_AUTO_INSTANT_HYBRID},
+#endif
+/// ALTEK_HAL <<<
+
 };
 
 const QCameraParameters::QCameraMap<cam_effect_mode_type>
@@ -812,7 +832,7 @@ QCameraParameters::QCameraParameters()
     // For thermal mode, it should be set as system property
     // because system property applies to all applications, while
     // parameters only apply to specific app.
-    property_get("persist.camera.thermal.mode", value, "fps");
+    property_get("persist.camera.thermal.mode", value, "frameskip");
     if (!strcmp(value, "frameskip")) {
         m_ThermalMode = QCAMERA_THERMAL_ADJUST_FRAMESKIP;
     } else {
