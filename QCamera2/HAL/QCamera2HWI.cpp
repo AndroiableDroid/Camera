@@ -2304,6 +2304,16 @@ int QCamera2HardwareInterface::autoFocus()
     case CAM_FOCUS_MODE_MACRO:
     case CAM_FOCUS_MODE_CONTINOUS_VIDEO:
     case CAM_FOCUS_MODE_CONTINOUS_PICTURE:
+/// ALTEK_HAL >>>
+// ENABLE_FOR_NEW_MODE
+#if 1
+    case CAM_FOCUS_MODE_CONTINOUS_PICTURE_HYBRID:
+    case CAM_FOCUS_MODE_CONTINOUS_VIDEO_HYBRID:
+    case CAM_FOCUS_MODE_AUTO_HYBRID:
+    case CAM_FOCUS_MODE_AUTO_INSTANT_HYBRID:
+#endif
+/// ALTEK_HAL <<<
+
         rc = mCameraHandle->ops->do_auto_focus(mCameraHandle->camera_handle);
         break;
     case CAM_FOCUS_MODE_INFINITY:
@@ -2340,6 +2350,12 @@ int QCamera2HardwareInterface::cancelAutoFocus()
     case CAM_FOCUS_MODE_MACRO:
     case CAM_FOCUS_MODE_CONTINOUS_VIDEO:
     case CAM_FOCUS_MODE_CONTINOUS_PICTURE:
+/// ALTEK_HAL >>>
+    case CAM_FOCUS_MODE_CONTINOUS_PICTURE_HYBRID:
+    case CAM_FOCUS_MODE_CONTINOUS_VIDEO_HYBRID:
+    case CAM_FOCUS_MODE_AUTO_HYBRID:
+    case CAM_FOCUS_MODE_AUTO_INSTANT_HYBRID:
+/// ALTEK_HAL <<<
         rc = mCameraHandle->ops->cancel_auto_focus(mCameraHandle->camera_handle);
         break;
     case CAM_FOCUS_MODE_INFINITY:
@@ -4070,13 +4086,18 @@ int32_t QCamera2HardwareInterface::processAutoFocusEvent(cam_auto_focus_data_t &
     switch (focusMode) {
     case CAM_FOCUS_MODE_AUTO:
     case CAM_FOCUS_MODE_MACRO:
+/// ALTEK_HAL >>>
+    case CAM_FOCUS_MODE_AUTO_HYBRID:
+    case CAM_FOCUS_MODE_AUTO_INSTANT_HYBRID:	
+/// ALTEK_HAL <<<
         if (getCancelAutoFocus()) {
             // auto focus has canceled, just ignore it
             break;
         }
 
         // If the HAL focus mode is different from AF INFINITY focus mode, send event to app
-        if ((focus_data.focus_mode == CAM_FOCUS_MODE_INFINITY) &&
+        if ((focus_data.focus_mode == CAM_FOCUS_MODE_INFINITY ||
+                focus_data.focus_mode == CAM_FOCUS_MODE_MACRO) &&
                 (focus_data.focus_state == CAM_AF_INACTIVE)) {
             ret = sendEvtNotify(CAMERA_MSG_FOCUS, true, 0);
             break;
@@ -4120,7 +4141,10 @@ int32_t QCamera2HardwareInterface::processAutoFocusEvent(cam_auto_focus_data_t &
         break;
     case CAM_FOCUS_MODE_CONTINOUS_VIDEO:
     case CAM_FOCUS_MODE_CONTINOUS_PICTURE:
-
+/// ALTEK_HAL >>>
+    case CAM_FOCUS_MODE_CONTINOUS_PICTURE_HYBRID:
+    case CAM_FOCUS_MODE_CONTINOUS_VIDEO_HYBRID:
+/// ALTEK_HAL <<<
         // If the HAL focus mode is different from AF INFINITY focus mode, send event to app
         if ((focus_data.focus_mode == CAM_FOCUS_MODE_INFINITY) &&
                 (focus_data.focus_state == CAM_AF_INACTIVE)) {
@@ -6892,16 +6916,14 @@ QCameraExif *QCamera2HardwareInterface::getExifData()
     }
 
     char value[PROPERTY_VALUE_MAX];
-    if (property_get("persist.sys.exif.make", value, "") > 0 ||
-            property_get("ro.product.manufacturer", value, "QCOM-AA") > 0) {
+    if (property_get("ro.product.manufacturer", value, "QCOM-AA") > 0) {
         exif->addEntry(EXIFTAGID_MAKE,
                 EXIF_ASCII, strlen(value) + 1, (void *)value);
     } else {
         ALOGE("%s: getExifMaker failed", __func__);
     }
 
-    if (property_get("persist.sys.exif.model", value, "") > 0 ||
-            property_get("ro.product.model", value, "QCAM-AA") > 0) {
+    if (property_get("ro.product.model", value, "QCAM-AA") > 0) {
         exif->addEntry(EXIFTAGID_MODEL,
                 EXIF_ASCII, strlen(value) + 1, (void *)value);
     } else {
