@@ -820,7 +820,8 @@ QCameraParameters::QCameraParameters()
       m_bIsLowMemoryDevice(false),
       m_bLowPowerMode(false),
       m_bIsLongshotLimited(false),
-      m_nMaxLongshotNum(-1)
+      m_nMaxLongshotNum(-1),
+      mFocusState(CAM_AF_NOT_FOCUSED)
 {
     char value[PROPERTY_VALUE_MAX];
     // TODO: may move to parameter instead of sysprop
@@ -917,7 +918,8 @@ QCameraParameters::QCameraParameters(const String8 &params)
     m_bIsLowMemoryDevice(false),
     m_bLowPowerMode(false),
     m_bIsLongshotLimited(false),
-    m_nMaxLongshotNum(-1)
+    m_nMaxLongshotNum(-1),
+    mFocusState(CAM_AF_NOT_FOCUSED)
 {
     memset(&m_LiveSnapshotSize, 0, sizeof(m_LiveSnapshotSize));
     m_pTorch = NULL;
@@ -5255,6 +5257,12 @@ TRANS_INIT_DONE:
  *==========================================================================*/
 void QCameraParameters::deinit()
 {
+    if (NULL != m_pParamHeap) {
+        m_pParamHeap->deallocate();
+        delete m_pParamHeap;
+        m_pParamHeap = NULL;
+        m_pParamBuf = NULL;
+    }
     if (!m_bInited) {
         return;
     }
@@ -5270,12 +5278,6 @@ void QCameraParameters::deinit()
         m_pCamOpsTbl = NULL;
     }
     m_pCapability = NULL;
-    if (NULL != m_pParamHeap) {
-        m_pParamHeap->deallocate();
-        delete m_pParamHeap;
-        m_pParamHeap = NULL;
-        m_pParamBuf = NULL;
-    }
 
     m_AdjustFPS = NULL;
 
@@ -7846,6 +7848,10 @@ int32_t QCameraParameters::updateFlash(bool commitSettings)
 
     if (value != mFlashDaemonValue) {
 
+        if (isAFRunning()) {
+            CDBG("%s: AF is running, cancel AF before changing flash mode ", __func__);
+            m_pCamOpsTbl->ops->cancel_auto_focus(m_pCamOpsTbl->camera_handle);
+        }
         ALOGV("%s: Setting Flash value %d", __func__, value);
         rc = AddSetParmEntryToBatch(m_pParamBuf,
                                       CAM_INTF_PARM_LED_MODE,
@@ -10700,6 +10706,25 @@ uint8_t QCameraParameters::getLongshotStages()
         numStages = propStages;
     }
     return numStages;
+}
+
+/*===========================================================================
+* FUNCTION   : isAFRunning
+*
+* DESCRIPTION: if AF is in progress while in Auto/Macro focus modes
+*
+* PARAMETERS : none
+*
+* RETURN     : true: AF in progress
+*              false: AF not in progress
+*==========================================================================*/
+bool QCameraParameters::isAFRunning()
+{
+    bool isAFInProgress = ((mFocusState == CAM_AF_SCANNING) &&
+                          ((mFocusMode == CAM_FOCUS_MODE_AUTO) ||
+                           (mFocusMode == CAM_FOCUS_MODE_MACRO)));
+
+    return isAFInProgress;
 }
 
 }; // namespace qcamera
