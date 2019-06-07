@@ -44,7 +44,6 @@ LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 LOCAL_CFLAGS += -Wall -Wextra -Werror
 
 LOCAL_MODULE := libmmcamera_interface
-LOCAL_CLANG  := false
 LOCAL_32_BIT_ONLY := true
 LOCAL_SHARED_LIBRARIES := libdl libcutils liblog
 LOCAL_MODULE_TAGS := optional
